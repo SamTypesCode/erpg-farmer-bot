@@ -1,4 +1,5 @@
 import path from "path";
+import chalk from "chalk";
 import fs from "fs/promises";
 import { fileURLToPath } from "url";
 import { Client } from "discord.js-selfbot-v13";
@@ -21,9 +22,25 @@ import { Client } from "discord.js-selfbot-v13";
     const client = new Client();
 
     client.on("ready", () => {
-      console.log(`${client.user?.username} is ready!`);
+      console.log(
+        `${chalk.greenBright("[SUCCESS]")} ${client.user?.username} is ready!`
+      );
     });
 
-    client.login(token);
+    try {
+      await client.login(token);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        if (err.message.includes("An invalid token was provided")) {
+          console.log(
+            `${chalk.redBright("[ERROR]")} invalid token, login failed.`
+          );
+        } else {
+          console.log(
+            `${chalk.redBright("[ERROR]")} login failed, error: ${err}`
+          );
+        }
+      }
+    }
   }
 })();
