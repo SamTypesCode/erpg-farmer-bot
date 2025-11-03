@@ -1,0 +1,35 @@
+{
+  "name": "erpg-farmer-bot",
+  "version": "1.0.0",
+  "description": "A Discord self-bot that automatically plays the EpicRPG bot, runs commands, tracks cooldowns, and solves captchas using AI.",
+  "keywords": [
+    "discord",
+    "selfbot",
+    "automation",
+    "epicrpg",
+    "bot",
+    "ai",
+    "farming",
+    "cooldown",
+    "captcha-solver",
+    "discord-automation",
+    "game-bot",
+    "typescript",
+    "autofarm"
+  ],
+  "homepage": "https://github.com/SamTypesCode/erpg-farmer-bot#readme",
+  "bugs": {
+    "url": "https://github.com/SamTypesCode/erpg-farmer-bot/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamTypesCode/erpg-farmer-bot.git"
+  },
+  "license": "MIT",
+  "author": "Sampreet Singh",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
