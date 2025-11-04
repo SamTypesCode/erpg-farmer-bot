@@ -35,14 +35,14 @@ async function login(token: string): Promise<void> {
   console.log(`${chalk.green("[LOGIN]")} Attempting login with token`);
 
   client.once("ready", () => {
-    console.log(`${chalk.greenBright("[READY]")} [${client.user?.username}] Logged in`);
-    console.log(
-      `${chalk.cyan("[INFO]")} [${client.user?.username}] Listening for ${config.command_prefix}start`
-    );
+    const username = client.user?.username ?? "Unknown";
+    console.log(`[${username}] ${chalk.greenBright("[READY]")} Logged in`);
+    console.log(`[${username}] ${chalk.cyan("[INFO]")} Listening for ${config.command_prefix}start`);
   });
 
   client.on("messageCreate", async (message: Message) => {
     if (message.author.id !== client.user?.id) return;
+    const username = client.user?.username ?? "Unknown";
 
     if (message.content.startsWith(`${config.command_prefix}start`)) {
       activeChannelId = message.channel.id;
@@ -51,19 +51,13 @@ async function login(token: string): Promise<void> {
           ? `#${message.channel.name}`
           : "DM channel";
 
-      console.log(
-        `${chalk.magentaBright("[ACTION]")} [${client.user?.username}] Started farming in ${channelName}`
-      );
+      console.log(`[${username}] ${chalk.magentaBright("[ACTION]")} Started farming in ${channelName}`);
 
       try {
         await message.delete();
-        console.log(
-          `${chalk.magenta("[ACTION]")} [${client.user?.username}] Deleted the trigger command`
-        );
+        console.log(`[${username}] ${chalk.magenta("[ACTION]")} Deleted the trigger command`);
       } catch {
-        console.log(
-          `${chalk.yellowBright("[WARN]")} [${client.user?.username}] Failed to delete the trigger message`
-        );
+        console.log(`[${username}] ${chalk.yellowBright("[WARN]")} Failed to delete the trigger message`);
       }
 
       return;
@@ -74,9 +68,7 @@ async function login(token: string): Promise<void> {
       message.channel.id === activeChannelId &&
       message.author.id === config.erpg_bot_id
     ) {
-      console.log(
-        `${chalk.cyan("[INFO]")} [${client.user?.username}] Message from EpicRPG bot detected`
-      );
+      console.log(`[${username}] ${chalk.cyan("[INFO]")} Message from EpicRPG bot detected`);
     }
   });
 
