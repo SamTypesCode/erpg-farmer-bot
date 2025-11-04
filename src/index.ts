@@ -1,103 +1,109 @@
 import path from "path";
 import fs from "fs/promises";
 import { fileURLToPath } from "url";
+import { Client, Message } from "discord.js-selfbot-v13";
+import { start_farming } from "./farmer.js";
+import { get_time, type ConfigType } from "./utils/lib.js";
 import chalk from "chalk";
-import { Client, Message, TextChannel } from "discord.js-selfbot-v13";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const config: ConfigType = (
+  await import("../config/config.json", { assert: { type: "json" } })
+).default;
 
 async function loadTokens(): Promise<string[]> {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const filePath = path.join(__dirname, "../config/tokens.txt");
-
+  const file = path.join(__dirname, "../config/tokens.txt");
   try {
-    const file = await fs.readFile(filePath, "utf-8");
-    return file
+    return (await fs.readFile(file, "utf-8"))
       .split(/\r?\n/)
-      .map((line) => line.trim())
+      .map((t) => t.trim())
       .filter(Boolean);
   } catch (err) {
-    console.error(`${chalk.redBright("[ERROR]")} Failed to load tokens:`, err);
+    console.log(
+      `${chalk.redBright(
+        "[ERROR]"
+      )} - ${get_time()}: Failed to load tokens: ${err}`
+    );
     return [];
   }
 }
 
-interface ConfigType {
-  command_prefix: string;
-  erpg_bot_id: string;
-}
-
-import rawConfig from "../config/config.json" with { type: "json" };
-const config: ConfigType = rawConfig;
-
 async function login(token: string): Promise<void> {
   const client = new Client();
-  let activeChannelId: string | null = null;
-
-  console.log(`${chalk.green("[LOGIN]")} Attempting login with token`);
 
   client.once("ready", () => {
     const username = client.user?.username ?? "Unknown";
-    console.log(`[${username}] ${chalk.greenBright("[READY]")} Logged in`);
-    console.log(`[${username}] ${chalk.cyan("[INFO]")} Listening for ${config.command_prefix}start`);
+    console.log(
+      `${chalk.greenBright("[READY]")} - ${get_time()}: ${chalk.redBright(
+        username
+      )}: Logged in`
+    );
+    console.log(
+      `${chalk.cyan("[EVENT]")} - ${get_time()}: ${chalk.redBright(
+        username
+      )}: Listening for ${config.command_prefix}start`
+    );
   });
 
-  client.on("messageCreate", async (message: Message) => {
-    if (message.author.id !== client.user?.id) return;
-    const username = client.user?.username ?? "Unknown";
+  client.on("messageCreate", async (msg: Message) => {
+    const self = client.user;
+    if (!self || msg.author.id !== self.id) return;
+    const username = self.username;
+    const prefix = config.command_prefix;
 
-    if (message.content.startsWith(`${config.command_prefix}start`)) {
-      activeChannelId = message.channel.id;
-      const channelName =
-        message.channel instanceof TextChannel
-          ? `#${message.channel.name}`
-          : "DM channel";
+    if (!msg.content.startsWith(`${prefix}start`)) return;
 
-      console.log(`[${username}] ${chalk.magentaBright("[ACTION]")} Started farming in ${channelName}`);
+    start_farming(client, msg.channel, config);
 
-      try {
-        await message.delete();
-        console.log(`[${username}] ${chalk.magenta("[ACTION]")} Deleted the trigger command`);
-      } catch {
-        console.log(`[${username}] ${chalk.yellowBright("[WARN]")} Failed to delete the trigger message`);
-      }
-
-      return;
-    }
-
-    if (
-      activeChannelId &&
-      message.channel.id === activeChannelId &&
-      message.author.id === config.erpg_bot_id
-    ) {
-      console.log(`[${username}] ${chalk.cyan("[INFO]")} Message from EpicRPG bot detected`);
+    try {
+      await msg.delete();
+      console.log(
+        `${chalk.magenta("[DOING]")} - ${get_time()}: ${chalk.redBright(
+          username
+        )}: Deleted trigger command`
+      );
+    } catch {
+      console.log(
+        `${chalk.yellowBright("[ALERT]")} - ${get_time()}: ${chalk.redBright(
+          username
+        )}: Failed to delete trigger message`
+      );
     }
   });
 
   try {
     await client.login(token);
   } catch (err) {
-    const msg =
+    const message =
       err instanceof Error && err.message.includes("invalid token")
         ? "Invalid token"
         : `Login failed: ${err}`;
-    console.log(`${chalk.redBright("[ERROR]")} ${msg}`);
+    console.log(`${chalk.redBright("[ERROR]")} - ${get_time()}: ${message}`);
   }
 }
 
 async function main(): Promise<void> {
   const tokens = await loadTokens();
-
-  if (tokens.length === 0) {
-    console.log(`${chalk.yellowBright("[WARN]")} No tokens found in config/tokens.txt`);
+  if (!tokens.length) {
+    console.log(
+      `${chalk.yellowBright(
+        "[ALERT]"
+      )} - ${get_time()}: No tokens found in config/tokens.txt`
+    );
     return;
   }
 
-  console.log(`${chalk.cyan("[INFO]")} Logging into ${tokens.length} token(s)`);
+  console.log(
+    `${chalk.cyan("[EVENT]")} - ${get_time()}: Logging into ${
+      tokens.length
+    } token(s)`
+  );
 
-  for (const token of tokens) {
-    await login(token);
-  }
+  for (const token of tokens) await login(token);
 }
 
 main().catch((err) => {
-  console.error(`${chalk.red("[FATAL]")} Unexpected error:`, err);
+  console.error(
+    `${chalk.red("[FATAL]")} - ${get_time()}: Unexpected error: ${err}`
+  );
 });
